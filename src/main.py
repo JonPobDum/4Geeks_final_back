@@ -9,9 +9,14 @@ from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import datetime 
 #from models import Person
 
 app = Flask(__name__)
+
+jwt = JWTManager(app) # INICIALIZANDO LA APLICACIÓN QUE TRABAJARA CON FLASK JWT------------------
+
 app.url_map.strict_slashes = False
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_CONNECTION_STRING')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -38,6 +43,40 @@ def handle_hello():
     }
 
     return jsonify(response_body), 200
+
+
+#----TOKEN PARA LOGIN------
+#SE INSTALO PIPENV INSTALL FLASK-JWT-EXTENDED----------------
+#SE REALIZO IMPORTACIÓN FROM FLASK_JWT_EXTENDED--------------
+# create_access_token : para crear token
+# jwt_required: sera que la persona tiene permiso para ingresar?-----------
+# get_jwt_identity: quien es la persona del token??? ----------------
+# datetime: ayuda a concer el tiempo, que hora estamos """"libreria"""""
+
+@app.route("/login", methods=['POST'])
+def login():
+    body = request.get_json()
+    one = User.query.filter_by(email =body['email'], password = body['password']).first() #email y password
+    if (one is None):
+        return "el usuario no existe o los datos son incrrectos"
+    else:
+        expiracion = datetime.timedelta(seconds= 60)
+        acceso = create_access_token(identity = body['email'], expires_delta = expiracion)
+        return {
+            "login": "ok",
+            "token": acceso,
+            "tiempo": expiracion.total_seconds()
+        }
+
+#A ESTA RUTA NO ENTRAS SI NO LE MANDAN UN TOKEN --------------------
+@app.route("/perfil", methods = ['GET'])
+@jwt_required()
+def perfil():
+    identidad = get_jwt_identity()
+    return " tienes permiso" + identidad
+
+
+
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
