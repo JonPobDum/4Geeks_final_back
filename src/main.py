@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for, render_template
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
@@ -25,25 +25,37 @@ db.init_app(app)
 CORS(app)
 setup_admin(app)
 
-# Handle/serialize errors like a JSON object
-@app.errorhandler(APIException)
-def handle_invalid_usage(error):
-    return jsonify(error.to_dict()), error.status_code
 
-# generate sitemap with all your endpoints
-@app.route('/')
-def sitemap():
-    return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
 
+# PARA REGISTRO DE NUEVA CUENTA, DEBO CREAR UN POST-------
+# PARA LOGIN TENGO QUE HACER UN GET  PUT PARA CAMBIAR CONTRASENA--------
+
+#CUANDO LOGEO CON MI CUENTA
+@app.route("/login_usuario", methods=['GET'])
+def logeando():
+    all_user = User.query.all()
+    print(all_user)
+    serializados = list(map(lambda user: user.serialize(), all_user))
     response_body = {
         "msg": "Hello, this is your GET /user response "
     }
+    return jsonify(serializados)
 
-    return jsonify(response_body), 200
 
+#PARA REGISTRAR CUENTA
+@app.route("/register", methods=['POST'])
+def registro():
+    body = request.get_json()
+    response = {
+        "mensaje":body['nombre'] + "hola"
+    }
+    return jsonify(response)
+
+#PARA VER EL PERFIL DEL USUARIO
+@app.route("/perfil/<nombre>", methods=['GET'])
+def perfil_user():
+    return "hola" + nombre
 
 #----TOKEN PARA LOGIN------
 #SE INSTALO PIPENV INSTALL FLASK-JWT-EXTENDED----------------
@@ -75,6 +87,37 @@ def perfil():
     identidad = get_jwt_identity()
     return " tienes permiso" + identidad
 
+
+# GET PARA EL USUARIO 
+
+
+
+
+
+
+
+
+
+
+
+# Handle/serialize errors like a JSON object
+@app.errorhandler(APIException)
+def handle_invalid_usage(error):
+    return jsonify(error.to_dict()), error.status_code
+
+# generate sitemap with all your endpoints
+@app.route('/')
+def sitemap():
+    return generate_sitemap(app)
+
+@app.route('/user', methods=['GET'])
+def handle_hello():
+
+    response_body = {
+        "msg": "Hello, this is your GET /user response "
+    }
+
+    return jsonify(response_body), 200
 
 
 
