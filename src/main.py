@@ -33,7 +33,7 @@ setup_admin(app)
 #PARA HACER LOGIN NECESITO HACER UN POST.----------
 # PARA LOGIN TENGO QUE HACER UN GET  PUT PARA CAMBIAR CONTRASENA--------
 
-#CUANDO LOGEO CON MI CUENTA
+#PARA MOSTRAR USUARIOS
 @app.route("/login_usuario", methods=['GET'])
 def logeando():
     #todos los usuarios que estan en la base de datos.
@@ -48,7 +48,7 @@ def logeando():
 
 
 #REGISTRO NUEVO USUARIO CREADO Y FUNCIONA 
-@app.route("/register", methods=['POST'])
+@app.route("/api/register", methods=['POST'])
 def registro():
 
     name = request.json.get("name")
@@ -90,7 +90,7 @@ def one_user(user_name):
 # get_jwt_identity: quien es la persona del token??? ----------------
 # datetime: ayuda a concer el tiempo, que hora estamos """"libreria"""""
 
-@app.route("/login", methods=['POST'])
+@app.route("/api/login", methods=['POST'])
 def login():
     body = request.get_json()
     one = User.query.filter_by(email =body['email'] ).first()
@@ -105,9 +105,10 @@ def login():
                 "login": "ok",
                 "token": acceso,
                 "tiempo": expiracion.total_seconds()
+                # redirect(url_for('login'))
             }
-        else: return "la clave es incorrecta"
-        
+        else: return "la clave es incorrecta, vuelva a intentarlo"
+
 #A ESTA RUTA NO ENTRAS SI NO LE MANDAN UN TOKEN --------------------
 @app.route("/perfil", methods = ['GET'])
 @jwt_required()
