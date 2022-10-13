@@ -21,6 +21,20 @@ class User(db.Model):
             # do not serialize the password, its a security breach
         }
 
+#ESTA CLASE ES PARA TODOLIST -------------------------------------------------
+class Agenda(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tareas = db.Column(db.String(500), unique=False, nullable=False)
+    
+    def __repr__(self):
+        return '<User %r>' % self.tareas
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "tareas": self.tareas,
+        }
+
     def save(self):
         db.session.add(self)
         db.session.commit()

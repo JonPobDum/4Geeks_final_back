@@ -34,7 +34,7 @@ setup_admin(app)
 # PARA LOGIN TENGO QUE HACER UN GET  PUT PARA CAMBIAR CONTRASENA--------
 
 #PARA MOSTRAR USUARIOS
-@app.route("/login_usuario", methods=['GET'])
+@app.route("/user_login", methods=['GET'])
 def logeando():
     #todos los usuarios que estan en la base de datos.
     all_user = User.query.all() #traigo todos los usuarios
@@ -68,6 +68,7 @@ def registro():
     user.password = generate_password_hash(password)
     user.is_active= True
     user.save()
+    # db.session.commit() CONSULTAR SI SE DEJA PARA PODER MANTENER LOS CAMBIOS
 
     return jsonify({"msg":"usuario registrado, por favor inicie session"}), 201
 
