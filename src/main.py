@@ -11,6 +11,7 @@ from admin import setup_admin
 from models import db, User
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import datetime 
+from werkzeug.security import generate_password_hash, check_password_hash
 #from models import Person
 
 app = Flask(__name__)
@@ -29,33 +30,57 @@ setup_admin(app)
 
 
 # PARA REGISTRO DE NUEVA CUENTA, DEBO CREAR UN POST-------
+#PARA HACER LOGIN NECESITO HACER UN POST.----------
 # PARA LOGIN TENGO QUE HACER UN GET  PUT PARA CAMBIAR CONTRASENA--------
 
 #CUANDO LOGEO CON MI CUENTA
 @app.route("/login_usuario", methods=['GET'])
 def logeando():
-    all_user = User.query.all()
-    print(all_user)
+    #todos los usuarios que estan en la base de datos.
+    all_user = User.query.all() #traigo todos los usuarios
+    print(all_user) #un arreglo de clases
     serializados = list(map(lambda user: user.serialize(), all_user))
+    # arreglo.map((ob, index, arreglo)=>(obj.serialize()))
     response_body = {
         "msg": "Hello, this is your GET /user response "
     }
     return jsonify(serializados)
 
 
-#PARA REGISTRAR CUENTA
+#REGISTRO NUEVO USUARIO CREADO Y FUNCIONA 
 @app.route("/register", methods=['POST'])
 def registro():
-    body = request.get_json()
-    response = {
-        "mensaje":body['nombre'] + "hola"
-    }
-    return jsonify(response)
 
-#PARA VER EL PERFIL DEL USUARIO
-@app.route("/perfil/<nombre>", methods=['GET'])
-def perfil_user():
-    return "hola" + nombre
+    name = request.json.get("name")
+    gender = request.json.get("gender")
+    age =request.json.get("age")
+    email = request.json.get("email")
+    password = request.json.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if user: return jsonify({"msg":"email ya esta en uso"}),400
+
+    user=User()
+    user.name =name
+    user.gender =gender
+    user.age =age
+    user.email = email
+    user.password = generate_password_hash(password)
+    user.is_active= True
+    user.save()
+
+    return jsonify({"msg":"usuario registrado, por favor inicie session"}), 201
+
+
+
+#PARA VER EL PERFIL DEL USUARIO ªªªªno funcionaºººººººº consultar
+@app.route("/perfil/<user_name>", methods=['GET'])
+def one_user(user_name):
+    one = name.query.filter_by(name=user_name).first
+    print(one)
+    return jsonify(one.serialize())
+
+
 
 #----TOKEN PARA LOGIN------
 #SE INSTALO PIPENV INSTALL FLASK-JWT-EXTENDED----------------
@@ -68,18 +93,21 @@ def perfil_user():
 @app.route("/login", methods=['POST'])
 def login():
     body = request.get_json()
-    one = User.query.filter_by(email =body['email'], password = body['password']).first() #email y password
+    one = User.query.filter_by(email =body['email'] ).first()
     if (one is None):
         return "el usuario no existe o los datos son incrrectos"
     else:
-        expiracion = datetime.timedelta(seconds= 60)
-        acceso = create_access_token(identity = body['email'], expires_delta = expiracion)
-        return {
-            "login": "ok",
-            "token": acceso,
-            "tiempo": expiracion.total_seconds()
-        }
+        if(check_password_hash(one.password,body["password"])):
 
+            expiracion = datetime.timedelta(seconds= 60)
+            acceso = create_access_token(identity = body['email'], expires_delta = expiracion)
+            return {
+                "login": "ok",
+                "token": acceso,
+                "tiempo": expiracion.total_seconds()
+            }
+        else: return "la clave es incorrecta"
+        
 #A ESTA RUTA NO ENTRAS SI NO LE MANDAN UN TOKEN --------------------
 @app.route("/perfil", methods = ['GET'])
 @jwt_required()
