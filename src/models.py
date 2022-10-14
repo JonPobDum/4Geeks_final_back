@@ -21,6 +21,17 @@ class User(db.Model):
             # do not serialize the password, its a security breach
         }
 
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def update(self):
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
 #ESTA CLASE ES PARA TODOLIST -------------------------------------------------
 class Agenda(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,13 +46,4 @@ class Agenda(db.Model):
             "tareas": self.tareas,
         }
 
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-    
-    def update(self):
-        db.session.commit()
-    
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
+   
