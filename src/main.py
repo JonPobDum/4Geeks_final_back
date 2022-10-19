@@ -2,7 +2,8 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for, render_template
+from flask import Flask, request, jsonify, url_for, render_template, abort,redirect,flash
+
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
@@ -11,6 +12,8 @@ from admin import setup_admin
 from models import db, User
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import datetime 
+import threading
+import json
 from werkzeug.security import generate_password_hash, check_password_hash
 #from models import Person
 
@@ -109,6 +112,76 @@ def login():
                 # redirect(url_for('login'))
             }
         else: return "la clave es incorrecta, vuelva a intentarlo"
+
+@app.route('/recuperarclave',methods=["POST","GET"])
+def index():
+    if request.method=="POST":
+        mail = request.form['mail']
+        check = User.query.filter_by(mail=mail).first()
+
+        if check:
+            hashCode = ''.join(random.choices(string.ascii_letters + string.digits, k=24))
+            check.hashCode = hashCode
+            db.session.commit()
+            msg = Message('Confirm Password Change', sender = 'berat@github.com', recipients = [mail])
+            msg.body = "Hello,\nWe've received a request to reset your password. If you want to reset your password, click the link below and enter your new password\n http://localhost:5000/" + check.hashCode
+            posta.send(msg)
+            return '''
+                <form action="/" method="post">
+                    <small>enter the email address of the account you forgot your password</small> <br>
+                    <input type="email" name="mail" id="mail" placeholder="mail@mail.com"> <br>
+                    <input type="submit" value="Submit">
+                </form>
+            '''
+    else:
+        return '''
+            <form action="/" method="post">
+                <small>enter the email address of the account you forgot your password</small> <br>
+                <input type="email" name="mail" id="mail" placeholder="mail@mail.com"> <br>
+                <input type="submit" value="Submit">
+            </form>
+        '''
+    
+@app.route("/<string:hashCode>",methods=["GET","POST"])
+def hashcode(hashCode):
+    check = User.query.filter_by(hashCode=hashCode).first()    
+    if check:
+        if request.method == 'POST':
+            passw = request.form['passw']
+            cpassw = request.form['cpassw']
+            if passw == cpassw:
+                check.password = passw
+                check.hashCode= None
+                db.session.commit()
+                return redirect(url_for('index'))
+            else:
+                flash('yanlış girdin')
+                return '''
+                    <form method="post">
+                        <small>enter your new password</small> <br>
+                        <input type="password" name="passw" id="passw" placeholder="password"> <br>
+                        <input type="password" name="cpassw" id="cpassw" placeholder="confirm password"> <br>
+                        <input type="submit" value="Submit">
+                    </form>
+                '''
+        else:
+            return '''
+                <form method="post">
+                    <small>enter your new password</small> <br>
+                    <input type="password" name="passw" id="passw" placeholder="password"> <br>
+                    <input type="password" name="cpassw" id="cpassw" placeholder="confirm password"> <br>
+                    <input type="submit" value="Submit">
+                </form>
+            '''
+    else:
+        return render_template('/')
+
+
+
+
+
+
+
 
 #A ESTA RUTA NO ENTRAS SI NO LE MANDAN UN TOKEN --------------------
 @app.route("/perfil", methods = ['GET'])
