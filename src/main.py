@@ -111,6 +111,10 @@ def login():
             return "la clave es incorrecta, vuelva a intentarlo"
 
 
+
+
+
+
 @app.route('/recuperar/clave', methods=['POST'])
 def recuperar_clave():
     # CONSULTA.
@@ -131,6 +135,11 @@ def recuperar_clave():
             "tiempo": expiracion.total_seconds()
         }
 
+@app.route('/clave/<email>', methods=['GET'])
+def recuperar_password(email):
+    two = User.query.filter_by(email=email).first()
+    return jsonify(two.password)
+    
 
 
 
