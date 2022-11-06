@@ -17,3 +17,27 @@ class User(db.Model):
             "email": self.email,
             # do not serialize the password, its a security breach
         }
+
+class AudioLibrary(db.Model):
+    __tablename__ = 'audios_library'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    path = db.Column(db.String(200), nullable=False)
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "path": self.path
+        }
+        
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        
+    def update(self):
+        db.session.commit()
+        
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()

@@ -6,9 +6,13 @@ from flask import Flask, request, jsonify, url_for
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
+from models import db, AudioLibrary
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, AudioLibrary
+import cloudinary
+import cloudinary.uploader
+from dotenv import load_dotenv
 #from models import Person
 
 app = Flask(__name__)
@@ -39,7 +43,25 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
+@app.route('/api/upload', methods=['POST'])
+def upload_audio():
+    
+    title = request.form['title']
+    audio = request.files['audio']
+    
+    resp = cloudinary.uploader.upload(audio, folder="audios", overwrite = True, resource_type="video")
+    
+    if not resp: return jsonify({ "msg": "Error al subir archivo"})
+    
+    myaudio = AudioLibrary()
+    myaudio.title = title
+    myaudio.path = resp['secure_url']
+    myaudio.save()
+    
+    return jsonify(myaudio.serialize()), 200
+
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=PORT, debug=False)
+
